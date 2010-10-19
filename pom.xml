@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>net.sf.proguard</groupId>
+	<artifactId>proguard-parent</artifactId>
+	<version>4.2</version>
+	<packaging>pom</packaging>
+	<name>[${project.groupId}] ${project.artifactId}</name>
+	<prerequisites>
+		<maven>2.0</maven>
+	</prerequisites>
+
+	<developers>
+		<developer>
+			<name>Eric Lafortune</name>
+			<url>http://www.graphics.cornell.edu/~eric/</url>
+			<organization>Luciad</organization>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>GNU GENERAL PUBLIC LICENSE Version 2</name>
+			<url>http://www.gnu.org/licenses/gpl-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/*.html</include>
+				</includes>
+			</resource>
+		</resources>
+	
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<links>
+						<link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+					</links>
+					<quiet>true</quiet>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<distributionManagement>
+		<repository>
+			<id>${proguard.repo.id}</id>
+			<name>${proguard.repo.name}</name>
+			<url>${proguard.repo.url}</url>
+		</repository>
+	</distributionManagement>
+
+	<modules>
+		<module>proguard-base</module>
+		<module>proguard-retrace</module>
+		<module>proguard-gui</module>
+		<module>proguard-anttask</module>
+		<module>proguard-wtk-plugin</module>
+	</modules>
+</project>
