@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>net.sf.proguard</groupId>
 	<artifactId>proguard-parent</artifactId>
 	<version>4.2</version>
 	<packaging>pom</packaging>
 	<name>[${project.groupId}] ${project.artifactId}</name>
-	<prerequisites>
-		<maven>2.0</maven>
-	</prerequisites>
+	<description>ProGuard is a free Java class file shrinker, optimizer, obfuscator, and preverifier.</description>
+	<url>http://proguard.sourceforge.net/</url>
 
 	<developers>
 		<developer>
@@ -27,6 +27,15 @@
 		</license>
 	</licenses>
 
+	<scm>
+		<url>git://github.com/mcpat/proguard-maven-modules.git</url>
+		<connection>scm:git:git://github.com/mcpat/proguard-maven-modules.git</connection>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<build>
 		<resources>
 			<resource>
@@ -39,7 +48,7 @@
 				</includes>
 			</resource>
 		</resources>
-	
+
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -58,6 +67,15 @@
 					</links>
 					<quiet>true</quiet>
 				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadoc</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -72,14 +90,29 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.1</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
 	<distributionManagement>
 		<repository>
-			<id>${proguard.repo.id}</id>
-			<name>${proguard.repo.name}</name>
-			<url>${proguard.repo.url}</url>
+			<id>sonatype-nexus-staging</id>
+			<name>Nexus Release Repository</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
 
