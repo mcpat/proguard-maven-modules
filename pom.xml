@@ -13,9 +13,15 @@
 
 	<developers>
 		<developer>
+			<id>lafortune</id>
 			<name>Eric Lafortune</name>
 			<url>http://www.graphics.cornell.edu/~eric/</url>
 			<organization>Luciad</organization>
+			<organizationUrl>http://www.luciad.com/</organizationUrl>
+			<roles>
+				<role>Project Administrator</role>
+				<role>Developer</role>
+			</roles>
 		</developer>
 	</developers>
 
@@ -26,6 +32,11 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
+	<issueManagement>
+		<system>SourceForge.net Tracker</system>
+		<url>http://sourceforge.net/tracker/?atid=474704&amp;group_id=54750</url>
+	</issueManagement>
 
 	<scm>
 		<url>git://github.com/mcpat/proguard-maven-modules.git</url>
