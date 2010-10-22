@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>net.sf.proguard</groupId>
 		<artifactId>proguard-parent</artifactId>
-		<version>4.2</version>
+		<version>4.3</version>
 	</parent>
 	<artifactId>proguard-anttask</artifactId>
 	<name>[${project.groupId}] ${project.artifactId}</name>

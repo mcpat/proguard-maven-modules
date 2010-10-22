@@ -1,8 +1,8 @@
-/* $Id: ClassPathPanel.java 23607 2009-06-03 09:49:57Z marcel $
+/*
+ * ProGuard -- shrinking, optimization, obfuscation, and preverification
+ *             of Java bytecode.
  *
- * ProGuard -- shrinking, optimization, and obfuscation of Java class files.
- *
- * Copyright (c) 2002-2007 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2008 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,30 +20,13 @@
  */
 package proguard.gui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 
-import proguard.ClassPath;
-import proguard.ClassPathEntry;
+import proguard.*;
 
 /**
  * This <code>ListPanel</code> allows the user to add, edit, filter, move, and
@@ -341,9 +324,9 @@ class ClassPathPanel extends ListPanel
         private static final String ARROW_IMAGE_FILE = "arrow.gif";
 
         private final JPanel cellPanel    = new JPanel(new GridBagLayout());
-        private final JLabel iconLabel    = new JLabel("", SwingConstants.RIGHT);
-        private final JLabel jarNameLabel = new JLabel("", SwingConstants.RIGHT);
-        private final JLabel filterLabel  = new JLabel("", SwingConstants.RIGHT);
+        private final JLabel iconLabel    = new JLabel("", JLabel.RIGHT);
+        private final JLabel jarNameLabel = new JLabel("", JLabel.RIGHT);
+        private final JLabel filterLabel  = new JLabel("", JLabel.RIGHT);
 
         private final Icon arrowIcon;
 
