@@ -53,7 +53,9 @@ fi
 rmdir "$pgdir/proguard$newversion"
 
 # remove old sources
-rm -Rf "$mvndir"/proguard-{anttask,base,gui,retrace,wtk-plugin}/src/main/{java,resources}/proguard
+for d in proguard-anttask proguard-base proguard-gui proguard-retrace proguard-wtk-plugin; do
+	rm -Rf "$mvndir/$d/src/main/java/proguard" "$mvndir/$d/src/main/resources/proguard"
+done
 
 # spread proguard's files over maven projects
 movetomvn "$pgdir/src" proguard/ant "$mvndir" proguard-anttask
@@ -68,9 +70,9 @@ rm -Rf "$pgdir"
 
 # update version in pom files
 sed -i 's|\(ProGuard\s\+\)[0-9.]\+|\1'"$newversion"'|i' "$mvndir/README"
-for f in "" proguard-anttask proguard-base proguard-gui proguard-retrace proguard-wtk-plugin; do
+for d in "" proguard-anttask proguard-base proguard-gui proguard-retrace proguard-wtk-plugin; do
 	# only do one substitution (first one is pom's version)
-	sed -i 's|\(<version>\)[0-9.]\+\(</version>\)|\1'"$newversion"'\2|;ta;b;:a;n;ba' "$mvndir/$f/pom.xml"
+	sed -i 's|\(<version>\)[0-9.]\+\(</version>\)|\1'"$newversion"'\2|;ta;b;:a;n;ba' "$mvndir/$d/pom.xml"
 done
 
 echo "Done! Don't forget to create a new tag."
