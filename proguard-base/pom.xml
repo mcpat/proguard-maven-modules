@@ -6,6 +6,7 @@
 		<groupId>net.sf.proguard</groupId>
 		<artifactId>proguard-parent</artifactId>
 		<version>4.4</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>proguard-base</artifactId>
 	<name>[${project.groupId}] ${project.artifactId}</name>
