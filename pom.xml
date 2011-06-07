@@ -39,8 +39,8 @@
 	</issueManagement>
 
 	<scm>
-		<url>git://github.com/mcpat/proguard-maven-modules.git</url>
-		<connection>scm:git:git://github.com/mcpat/proguard-maven-modules.git</connection>
+		<url>git://github.com/wvengen/proguard-maven-modules.git</url>
+		<connection>scm:git:git://github.com/wvengen/proguard-maven-modules.git</connection>
 	</scm>
 
 	<properties>
