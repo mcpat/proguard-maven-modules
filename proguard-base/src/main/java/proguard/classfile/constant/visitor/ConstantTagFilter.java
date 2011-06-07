@@ -2,7 +2,7 @@
  * ProGuard -- shrinking, optimization, obfuscation, and preverification
  *             of Java bytecode.
  *
- * Copyright (c) 2002-2010 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2011 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,49 +18,48 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-package proguard.classfile.visitor;
+package proguard.classfile.constant.visitor;
 
 import proguard.classfile.Clazz;
 import proguard.classfile.constant.*;
-import proguard.classfile.constant.visitor.ConstantVisitor;
 import proguard.classfile.util.SimplifiedVisitor;
 
-
 /**
- * This ConstantVisitor lets a given <code>ClassVisitor</code> visit all
- * constant classes involved in any <code>Class.forName</code> constructs that
- * it visits.
- *
- * @see DotClassClassVisitor
+ * This <code>ConstantVisitor</code> delegates its visits to a specified type
+ * of constants.
  *
  * @author Eric Lafortune
  */
-public class ClassForNameClassVisitor
+public class ConstantTagFilter
 extends      SimplifiedVisitor
 implements   ConstantVisitor
 {
-    private final ClassVisitor classVisitor;
+    private final int             constantTag;
+    private final ConstantVisitor constantVisitor;
 
 
     /**
-     * Creates a new ClassHierarchyTraveler.
-     * @param classVisitor the <code>ClassVisitor</code> to which visits will
-     *                     be delegated.
+     * Creates a new ConstantTypeFilter.
+     * @param constantTag     the type of constants for which visits will be
+     *                        delegated.
+     * @param constantVisitor the <code>ConstantVisitor</code> to which visits
+     *                        will be delegated.
      */
-    public ClassForNameClassVisitor(ClassVisitor classVisitor)
+    public ConstantTagFilter(int             constantTag,
+                              ConstantVisitor constantVisitor)
     {
-        this.classVisitor = classVisitor;
+        this.constantTag     = constantTag;
+        this.constantVisitor = constantVisitor;
     }
 
 
     // Implementations for ConstantVisitor.
 
-    public void visitAnyConstant(Clazz clazz, Constant constant) {}
-
-
-    public void visitStringConstant(Clazz clazz, StringConstant stringConstant)
+    public void visitAnyConstant(Clazz clazz, Constant constant)
     {
-        // Visit the referenced class from the Class.forName construct, if any.
-        stringConstant.referencedClassAccept(classVisitor);
+        if (constant.getTag() == constantTag)
+        {
+            constant.accept(clazz, constantVisitor);
+        }
     }
 }
