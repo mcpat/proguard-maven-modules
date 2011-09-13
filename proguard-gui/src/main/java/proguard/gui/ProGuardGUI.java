@@ -2,7 +2,7 @@
  * ProGuard -- shrinking, optimization, obfuscation, and preverification
  *             of Java bytecode.
  *
- * Copyright (c) 2002-2010 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2011 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -33,7 +33,6 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
-import java.lang.reflect.InvocationTargetException;
 
 
 /**
@@ -1440,13 +1439,13 @@ public class ProGuardGUI extends JFrame
     /**
      * Loads the given stack trace into the GUI.
      */
-    private void loadStackTrace(String fileName)
+    private void loadStackTrace(File file)
     {
         try
         {
             StringBuffer buffer = new StringBuffer(1024);
 
-            Reader reader = new BufferedReader(new FileReader(fileName));
+            Reader reader = new BufferedReader(new FileReader(file));
             try
             {
                 while (true)
@@ -1471,7 +1470,7 @@ public class ProGuardGUI extends JFrame
         catch (IOException ex)
         {
             JOptionPane.showMessageDialog(getContentPane(),
-                                          msg("cantOpenStackTraceFile", fileName),
+                                          msg("cantOpenStackTraceFile", fileName(file)),
                                           msg("warning"),
                                           JOptionPane.ERROR_MESSAGE);
         }
@@ -1604,10 +1603,8 @@ public class ProGuardGUI extends JFrame
             int returnValue = fileChooser.showOpenDialog(ProGuardGUI.this);
             if (returnValue == JFileChooser.APPROVE_OPTION)
             {
-                File selectedFile = fileChooser.getSelectedFile();
-                String fileName = selectedFile.getPath();
 
-                loadStackTrace(fileName);
+                loadStackTrace(fileChooser.getSelectedFile());
             }
         }
     }
@@ -1645,12 +1642,37 @@ public class ProGuardGUI extends JFrame
     // Small utility methods.
 
     /**
-     * Returns the file name of the given file, if any.
+     * Returns the canonical file name for the given file, or the empty string
+     * if the file name is empty.
      */
-    private static String fileName(File file)
+    private String fileName(File file)
     {
-        return file == null || file.getName().length() == 0 ? "" :
-            file.getAbsolutePath();
+        if (isFile(file))
+        {
+            try
+            {
+                return file.getCanonicalPath();
+            }
+            catch (IOException ex)
+            {
+                return file.getPath();
+            }
+        }
+        else
+        {
+            return "";
+        }
+    }
+
+
+    /**
+     * Returns whether the given file is actually a file, or just a placeholder
+     * for the standard output.
+     */
+    private boolean isFile(File file)
+    {
+        return file != null &&
+               file.getPath().length() > 0;
     }
 
 
@@ -1698,46 +1720,52 @@ public class ProGuardGUI extends JFrame
             {
                 public void run()
                 {
-                    ProGuardGUI gui = new ProGuardGUI();
-                    gui.pack();
-
-                    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                    Dimension guiSize    = gui.getSize();
-                    gui.setLocation((screenSize.width - guiSize.width)   / 2,
-                                    (screenSize.height - guiSize.height) / 2);
-                    gui.show();
-
-                    // Start the splash animation, unless specified otherwise.
-                    int argIndex = 0;
-                    if (argIndex < args.length &&
-                        NO_SPLASH_OPTION.startsWith(args[argIndex]))
+                    try
                     {
-                        gui.skipSplash();
-                        argIndex++;
-                    }
-                    else
-                    {
-                        gui.startSplash();
-                    }
+                        ProGuardGUI gui = new ProGuardGUI();
+                        gui.pack();
 
-                    // Load an initial configuration, if specified.
-                    if (argIndex < args.length)
-                    {
-                        gui.loadConfiguration(new File(args[argIndex]));
-                        argIndex++;
-                    }
+                        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                        Dimension guiSize    = gui.getSize();
+                        gui.setLocation((screenSize.width - guiSize.width)   / 2,
+                                        (screenSize.height - guiSize.height) / 2);
+                        gui.show();
 
-                    if (argIndex < args.length)
-                    {
-                        System.out.println(gui.getClass().getName() + ": ignoring extra arguments [" + args[argIndex] + "...]");
-                    }
+                        // Start the splash animation, unless specified otherwise.
+                        int argIndex = 0;
+                        if (argIndex < args.length &&
+                            NO_SPLASH_OPTION.startsWith(args[argIndex]))
+                        {
+                            gui.skipSplash();
+                            argIndex++;
+                        }
+                        else
+                        {
+                            gui.startSplash();
+                        }
 
+                        // Load an initial configuration, if specified.
+                        if (argIndex < args.length)
+                        {
+                            gui.loadConfiguration(new File(args[argIndex]));
+                            argIndex++;
+                        }
+
+                        if (argIndex < args.length)
+                        {
+                            System.out.println(gui.getClass().getName() + ": ignoring extra arguments [" + args[argIndex] + "...]");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        System.out.println("Internal problem starting the ProGuard GUI (" + e.getMessage() + ")");
+                    }
                 }
             });
         }
         catch (Exception e)
         {
-            // Nothing.
+            System.out.println("Internal problem starting the ProGuard GUI (" + e.getMessage() + ")");
         }
     }
 }

@@ -2,7 +2,7 @@
  * ProGuard -- shrinking, optimization, obfuscation, and preverification
  *             of Java bytecode.
  *
- * Copyright (c) 2002-2010 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2011 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -86,14 +86,28 @@ implements   ConstantVisitor
     public void visitStringConstant(Clazz clazz, StringConstant stringConstant)
     {
         value = valueFactory.createReferenceValue(ClassConstants.INTERNAL_NAME_JAVA_LANG_STRING,
-                                                    stringConstant.javaLangStringClass,
-                                                    false);
+                                                  stringConstant.javaLangStringClass,
+                                                  false);
+    }
+
+    public void visitMethodHandleConstant(Clazz clazz, MethodHandleConstant methodHandleConstant)
+    {
+        value = valueFactory.createReferenceValue(ClassConstants.INTERNAL_NAME_JAVA_LANG_INVOKE_METHOD_HANDLE,
+                                                  methodHandleConstant.javaLangInvokeMethodHandleClass,
+                                                  false);
     }
 
     public void visitClassConstant(Clazz clazz, ClassConstant classConstant)
     {
         value = valueFactory.createReferenceValue(classConstant.getName(clazz),
                                                   classConstant.referencedClass,
+                                                  false);
+    }
+
+    public void visitMethodTypeConstant(Clazz clazz, MethodTypeConstant methodTypeConstant)
+    {
+        value = valueFactory.createReferenceValue(ClassConstants.INTERNAL_NAME_JAVA_LANG_INVOKE_METHOD_TYPE,
+                                                  methodTypeConstant.javaLangInvokeMethodTypeClass,
                                                   false);
     }
 }

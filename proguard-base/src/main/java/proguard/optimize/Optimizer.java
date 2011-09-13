@@ -2,7 +2,7 @@
  * ProGuard -- shrinking, optimization, obfuscation, and preverification
  *             of Java bytecode.
  *
- * Copyright (c) 2002-2010 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2011 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -23,7 +23,7 @@ package proguard.optimize;
 import proguard.*;
 import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.*;
-import proguard.classfile.constant.visitor.AllConstantVisitor;
+import proguard.classfile.constant.visitor.*;
 import proguard.classfile.editor.*;
 import proguard.classfile.instruction.visitor.*;
 import proguard.classfile.util.MethodLinker;
@@ -66,6 +66,7 @@ public class Optimizer
     private static final String CODE_SIMPLIFICATION_CAST       = "code/simplification/cast";
     private static final String CODE_SIMPLIFICATION_FIELD      = "code/simplification/field";
     private static final String CODE_SIMPLIFICATION_BRANCH     = "code/simplification/branch";
+    private static final String CODE_SIMPLIFICATION_STRING     = "code/simplification/string";
     private static final String CODE_SIMPLIFICATION_ADVANCED   = "code/simplification/advanced";
     private static final String CODE_REMOVAL_ADVANCED          = "code/removal/advanced";
     private static final String CODE_REMOVAL_SIMPLE            = "code/removal/simple";
@@ -158,6 +159,7 @@ public class Optimizer
         boolean codeSimplificationCast       = filter.matches(CODE_SIMPLIFICATION_CAST);
         boolean codeSimplificationField      = filter.matches(CODE_SIMPLIFICATION_FIELD);
         boolean codeSimplificationBranch     = filter.matches(CODE_SIMPLIFICATION_BRANCH);
+        boolean codeSimplificationString     = filter.matches(CODE_SIMPLIFICATION_STRING);
         boolean codeSimplificationAdvanced   = filter.matches(CODE_SIMPLIFICATION_ADVANCED);
         boolean codeRemovalAdvanced          = filter.matches(CODE_REMOVAL_ADVANCED);
         boolean codeRemovalSimple            = filter.matches(CODE_REMOVAL_SIMPLE);
@@ -187,13 +189,15 @@ public class Optimizer
         InstructionCounter codeSimplificationCastCounter       = new InstructionCounter();
         InstructionCounter codeSimplificationFieldCounter      = new InstructionCounter();
         InstructionCounter codeSimplificationBranchCounter     = new InstructionCounter();
+        InstructionCounter codeSimplificationStringCounter     = new InstructionCounter();
         InstructionCounter codeSimplificationAdvancedCounter   = new InstructionCounter();
         InstructionCounter deletedCounter                      = new InstructionCounter();
         InstructionCounter addedCounter                        = new InstructionCounter();
         MemberCounter      codeRemovalVariableCounter          = new MemberCounter();
         ExceptionCounter   codeRemovalExceptionCounter         = new ExceptionCounter();
         MemberCounter      codeAllocationVariableCounter       = new MemberCounter();
-        MemberCounter      initializerFixCounter               = new MemberCounter();
+        MemberCounter      initializerFixCounter1              = new MemberCounter();
+        MemberCounter      initializerFixCounter2              = new MemberCounter();
 
         // Some optimizations are required by other optimizations.
         codeSimplificationAdvanced =
@@ -251,10 +255,17 @@ public class Optimizer
             new AllInstructionVisitor(
             new DotClassClassVisitor(keepMarker)))));
 
-        // We also keep all classes that are involved in Class.forName constructs.
+        // We also keep all classes that are accessed dynamically.
         programClassPool.classesAccept(
             new AllConstantVisitor(
-            new ClassForNameClassVisitor(keepMarker)));
+            new ConstantTagFilter(ClassConstants.CONSTANT_String,
+            new ReferencedClassVisitor(keepMarker))));
+
+        // We also keep all class members that are accessed dynamically.
+        programClassPool.classesAccept(
+            new AllConstantVisitor(
+            new ConstantTagFilter(ClassConstants.CONSTANT_String,
+            new ReferencedMemberVisitor(keepMarker))));
 
         // Attach some optimization info to all classes and class members, so
         // it can be filled out later.
@@ -320,6 +331,9 @@ public class Optimizer
             new OptimizationInfoMemberFilter(
             new ParameterUsageMarker(!methodMarkingStatic,
                                      !methodRemovalParameter))));
+
+        // Mark all classes that have static initializers.
+        programClassPool.classesAccept(new StaticInitializerContainingClassMarker());
 
         // Mark all methods that have side effects.
         programClassPool.accept(new SideEffectMethodMarker());
@@ -419,6 +433,12 @@ public class Optimizer
             // This operation also updates the stack sizes.
             programClassPool.classesAccept(
                 new MemberReferenceFixer());
+
+            // Remove unused bootstrap method arguments.
+            programClassPool.classesAccept(
+                new AllAttributeVisitor(
+                new AllBootstrapMethodInfoVisitor(
+                new BootstrapMethodArgumentShrinker())));
         }
 
         if (methodRemovalParameter ||
@@ -442,17 +462,39 @@ public class Optimizer
                 new StackSizeUpdater())));
         }
 
-//        // Specializing the class member descriptors seems to increase the
-//        // class file size, on average.
-//        // Specialize all class member descriptors.
-//        programClassPool.classesAccept(new AllMemberVisitor(
-//                                       new OptimizationInfoMemberFilter(
-//                                       new MemberDescriptorSpecializer())));
-//
-//        // Fix all references to classes, for MemberDescriptorSpecializer.
-//        programClassPool.classesAccept(new AllMemberVisitor(
-//                                       new OptimizationInfoMemberFilter(
-//                                       new ClassReferenceFixer(true))));
+        if (methodRemovalParameter &&
+            methodRemovalParameterCounter.getCount() > 0)
+        {
+            // Tweak the descriptors of duplicate initializers, due to removed
+            // method parameters.
+            programClassPool.classesAccept(
+                new AllMethodVisitor(
+                new DuplicateInitializerFixer(initializerFixCounter1)));
+
+            if (initializerFixCounter1.getCount() > 0)
+            {
+                // Fix all invocations of tweaked initializers.
+                programClassPool.classesAccept(
+                    new AllMethodVisitor(
+                    new AllAttributeVisitor(
+                    new DuplicateInitializerInvocationFixer(addedCounter))));
+
+                // Fix all references to tweaked initializers.
+                programClassPool.classesAccept(new MemberReferenceFixer());
+            }
+        }
+
+        //// Specializing the class member descriptors seems to increase the
+        //// class file size, on average.
+        //// Specialize all class member descriptors.
+        //programClassPool.classesAccept(new AllMemberVisitor(
+        //                               new OptimizationInfoMemberFilter(
+        //                               new MemberDescriptorSpecializer())));
+        //
+        //// Fix all references to classes, for MemberDescriptorSpecializer.
+        //programClassPool.classesAccept(new AllMemberVisitor(
+        //                               new OptimizationInfoMemberFilter(
+        //                               new ClassReferenceFixer(true))));
 
         // Mark all classes with package visible members.
         // Mark all exception catches of methods.
@@ -462,13 +504,13 @@ public class Optimizer
             new MultiClassVisitor(
             new ClassVisitor[]
             {
+                new PackageVisibleMemberContainingClassMarker(),
                 new AllConstantVisitor(
                 new PackageVisibleMemberInvokingClassMarker()),
                 new AllMethodVisitor(
                 new MultiMemberVisitor(
                 new MemberVisitor[]
                 {
-                    new PackageVisibleMemberContainingClassMarker(),
                     new AllAttributeVisitor(
                     new MultiAttributeVisitor(
                     new AttributeVisitor[]
@@ -512,8 +554,8 @@ public class Optimizer
                                           classMergingHorizontalCounter));
         }
 
-        if (classMergingVertical ||
-            classMergingHorizontal)
+        if (classMergingVerticalCounter  .getCount() > 0 ||
+            classMergingHorizontalCounter.getCount() > 0)
         {
             // Clean up inner class attributes to avoid loops.
             programClassPool.classesAccept(new RetargetedInnerClassAttributeRemover());
@@ -537,18 +579,14 @@ public class Optimizer
                 new AllAttributeVisitor(
                 new AllInnerClassesInfoVisitor(
                 new InnerClassesAccessFixer())));
-        }
 
-        if (methodRemovalParameter ||
-            classMergingVertical   ||
-            classMergingHorizontal)
-        {
-            // Tweak the descriptors of duplicate initializers.
+            // Tweak the descriptors of duplicate initializers, due to merged
+            // parameter classes.
             programClassPool.classesAccept(
                 new AllMethodVisitor(
-                new DuplicateInitializerFixer(initializerFixCounter)));
+                new DuplicateInitializerFixer(initializerFixCounter2)));
 
-            if (initializerFixCounter.getCount() > 0)
+            if (initializerFixCounter2.getCount() > 0)
             {
                 // Fix all invocations of tweaked initializers.
                 programClassPool.classesAccept(
@@ -622,9 +660,9 @@ public class Optimizer
                 new MemberPrivatizer(methodMarkingPrivateCounter)))));
         }
 
-        if ((methodInliningUnique ||
-             methodInliningShort  ||
-             methodInliningTailrecursion) &&
+        if ((methodInliningUniqueCounter       .getCount() > 0 ||
+             methodInliningShortCounter        .getCount() > 0 ||
+             methodInliningTailrecursionCounter.getCount() > 0) &&
             configuration.allowAccessModification)
         {
             // Fix the access flags of referenced classes and class members,
@@ -634,10 +672,10 @@ public class Optimizer
                 new AccessFixer()));
         }
 
-        if (methodRemovalParameter ||
-            classMergingVertical   ||
-            classMergingHorizontal ||
-            methodMarkingPrivate)
+        if (methodRemovalParameterCounter .getCount() > 0 ||
+            classMergingVerticalCounter   .getCount() > 0 ||
+            classMergingHorizontalCounter .getCount() > 0 ||
+            methodMarkingPrivateCounter   .getCount() > 0 )
         {
             // Fix invocations of interface methods, of methods that have become
             // non-abstract or private, and of methods that have moved to a
@@ -714,6 +752,15 @@ public class Optimizer
                 new GotoReturnReplacer(codeAttributeEditor, codeSimplificationBranchCounter));
         }
 
+        if (codeSimplificationString)
+        {
+            // Peephole optimizations involving branches.
+            peepholeOptimizations.add(
+                new InstructionSequencesReplacer(InstructionSequenceConstants.CONSTANTS,
+                                                 InstructionSequenceConstants.STRING,
+                                                 branchTargetFinder, codeAttributeEditor, codeSimplificationStringCounter));
+        }
+
         if (!peepholeOptimizations.isEmpty())
         {
             // Convert the list into an array.
@@ -766,6 +813,11 @@ public class Optimizer
                 new VariableOptimizer(false, codeAllocationVariableCounter))));
         }
 
+
+        // Remove unused constants.
+        programClassPool.classesAccept(
+            new ConstantPoolShrinker());
+
         int classMarkingFinalCount            = classMarkingFinalCounter           .getCount();
         int classMergingVerticalCount         = classMergingVerticalCounter        .getCount();
         int classMergingHorizontalCount       = classMergingHorizontalCounter      .getCount();
@@ -775,7 +827,7 @@ public class Optimizer
         int methodMarkingPrivateCount         = methodMarkingPrivateCounter        .getCount();
         int methodMarkingStaticCount          = methodMarkingStaticCounter         .getCount();
         int methodMarkingFinalCount           = methodMarkingFinalCounter          .getCount();
-        int methodRemovalParameterCount       = methodRemovalParameterCounter      .getCount() - methodMarkingStaticCounter.getCount() - initializerFixCounter.getCount();
+        int methodRemovalParameterCount       = methodRemovalParameterCounter      .getCount() - methodMarkingStaticCounter.getCount() - initializerFixCounter1.getCount() - initializerFixCounter2.getCount();
         int methodPropagationParameterCount   = methodPropagationParameterCounter  .getCount();
         int methodPropagationReturnvalueCount = methodPropagationReturnvalueCounter.getCount();
         int methodInliningShortCount          = methodInliningShortCounter         .getCount();
@@ -787,6 +839,7 @@ public class Optimizer
         int codeSimplificationCastCount       = codeSimplificationCastCounter      .getCount();
         int codeSimplificationFieldCount      = codeSimplificationFieldCounter     .getCount();
         int codeSimplificationBranchCount     = codeSimplificationBranchCounter    .getCount();
+        int codeSimplificationStringCount     = codeSimplificationStringCounter    .getCount();
         int codeSimplificationAdvancedCount   = codeSimplificationAdvancedCounter  .getCount();
         int codeRemovalCount                  = deletedCounter                     .getCount() - addedCounter.getCount();
         int codeRemovalVariableCount          = codeRemovalVariableCounter         .getCount();
@@ -816,6 +869,7 @@ public class Optimizer
             System.out.println("  Number of cast peephole optimizations:       " + codeSimplificationCastCount       + disabled(codeSimplificationCast));
             System.out.println("  Number of field peephole optimizations:      " + codeSimplificationFieldCount      + disabled(codeSimplificationField));
             System.out.println("  Number of branch peephole optimizations:     " + codeSimplificationBranchCount     + disabled(codeSimplificationBranch));
+            System.out.println("  Number of string peephole optimizations:     " + codeSimplificationStringCount     + disabled(codeSimplificationString));
             System.out.println("  Number of simplified instructions:           " + codeSimplificationAdvancedCount   + disabled(codeSimplificationAdvanced));
             System.out.println("  Number of removed instructions:              " + codeRemovalCount                  + disabled(codeRemovalAdvanced));
             System.out.println("  Number of removed local variables:           " + codeRemovalVariableCount          + disabled(codeRemovalVariable));
@@ -844,6 +898,7 @@ public class Optimizer
                codeSimplificationCastCount       > 0 ||
                codeSimplificationFieldCount      > 0 ||
                codeSimplificationBranchCount     > 0 ||
+               codeSimplificationStringCount     > 0 ||
                codeSimplificationAdvancedCount   > 0 ||
                codeRemovalCount                  > 0 ||
                codeRemovalVariableCount          > 0 ||

@@ -2,7 +2,7 @@
  * ProGuard -- shrinking, optimization, obfuscation, and preverification
  *             of Java bytecode.
  *
- * Copyright (c) 2002-2010 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2011 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -67,6 +67,9 @@ implements ClassVisitor,
 
     private final MyInterfaceUsageMarker          interfaceUsageMarker          = new MyInterfaceUsageMarker();
     private final MyPossiblyUsedMemberUsageMarker possiblyUsedMemberUsageMarker = new MyPossiblyUsedMemberUsageMarker();
+    private final MemberVisitor                   nonEmptyMethodUsageMarker     = new AllAttributeVisitor(
+                                                                                  new MyNonEmptyMethodUsageMarker());
+
 //    private ClassVisitor       dynamicClassMarker   =
 //        new MultiClassVisitor(
 //        new ClassVisitor[]
@@ -107,10 +110,10 @@ implements ClassVisitor,
         programClass.hierarchyAccept(false, false, true, false,
                                      interfaceUsageMarker);
 
-        // Explicitly mark the <clinit> method.
+        // Explicitly mark the <clinit> method, if it's not empty.
         programClass.methodAccept(ClassConstants.INTERNAL_METHOD_NAME_CLINIT,
                                   ClassConstants.INTERNAL_METHOD_TYPE_CLINIT,
-                                  this);
+                                  nonEmptyMethodUsageMarker);
 
         // Explicitly mark the parameterless <init> method.
         programClass.methodAccept(ClassConstants.INTERNAL_METHOD_NAME_INIT,
@@ -187,6 +190,10 @@ implements ClassVisitor,
     }
 
 
+    /**
+     * This MemberVisitor marks ProgramField and ProgramMethod objects that
+     * have already been marked as possibly used.
+     */
     private class MyPossiblyUsedMemberUsageMarker
     extends       SimplifiedVisitor
     implements    MemberVisitor
@@ -225,6 +232,28 @@ implements ClassVisitor,
 
                 // Note that, if the method has been marked as possibly used,
                 // the method hierarchy has already been marked (cfr. below).
+            }
+        }
+    }
+
+
+    /**
+     * This AttributeVisitor marks ProgramMethod objects of non-empty methods.
+     */
+    private class MyNonEmptyMethodUsageMarker
+    extends       SimplifiedVisitor
+    implements    AttributeVisitor
+    {
+        // Implementations for AttributeVisitor.
+
+        public void visitAnyAttribute(Clazz clazz, Attribute attribute) {}
+
+
+        public void visitCodeAttribute(Clazz clazz, Method method, CodeAttribute codeAttribute)
+        {
+            if (codeAttribute.u4codeLength > 1)
+            {
+                method.accept(clazz, UsageMarker.this);
             }
         }
     }
@@ -415,6 +444,31 @@ implements ClassVisitor,
     }
 
 
+    public void visitInvokeDynamicConstant(Clazz clazz, InvokeDynamicConstant invokeDynamicConstant)
+    {
+        if (shouldBeMarkedAsUsed(invokeDynamicConstant))
+        {
+            markAsUsed(invokeDynamicConstant);
+
+            markConstant(clazz, invokeDynamicConstant.u2nameAndTypeIndex);
+
+            // Mark the bootstrap methods attribute.
+            clazz.attributesAccept(new MyBootStrapMethodUsageMarker(invokeDynamicConstant.u2bootstrapMethodAttributeIndex));
+        }
+    }
+
+
+    public void visitMethodHandleConstant(Clazz clazz, MethodHandleConstant methodHandleConstant)
+    {
+        if (shouldBeMarkedAsUsed(methodHandleConstant))
+        {
+            markAsUsed(methodHandleConstant);
+
+            markConstant(clazz, methodHandleConstant.u2referenceIndex);
+        }
+    }
+
+
     public void visitAnyRefConstant(Clazz clazz, RefConstant refConstant)
     {
         if (shouldBeMarkedAsUsed(refConstant))
@@ -450,6 +504,17 @@ implements ClassVisitor,
     }
 
 
+    public void visitMethodTypeConstant(Clazz clazz, MethodTypeConstant methodTypeConstant)
+    {
+        if (shouldBeMarkedAsUsed(methodTypeConstant))
+        {
+            markAsUsed(methodTypeConstant);
+
+            markConstant(clazz, methodTypeConstant.u2descriptorIndex);
+        }
+    }
+
+
     public void visitNameAndTypeConstant(Clazz clazz, NameAndTypeConstant nameAndTypeConstant)
     {
         if (shouldBeMarkedAsUsed(nameAndTypeConstant))
@@ -458,6 +523,58 @@ implements ClassVisitor,
 
             markConstant(clazz, nameAndTypeConstant.u2nameIndex);
             markConstant(clazz, nameAndTypeConstant.u2descriptorIndex);
+        }
+    }
+
+
+    /**
+     * This AttributeVisitor marks the bootstrap methods attributes, their
+     * method entries, their method handles, and their arguments.
+     */
+    private class MyBootStrapMethodUsageMarker
+    extends       SimplifiedVisitor
+    implements    AttributeVisitor,
+                  BootstrapMethodInfoVisitor
+    {
+        private int bootstrapMethodIndex;;
+
+
+        private MyBootStrapMethodUsageMarker(int bootstrapMethodIndex)
+        {
+            this.bootstrapMethodIndex = bootstrapMethodIndex;
+        }
+
+
+        // Implementations for AttributeVisitor.
+
+        public void visitAnyAttribute(Clazz clazz, Attribute attribute) {}
+
+
+        public void visitBootstrapMethodsAttribute(Clazz clazz, BootstrapMethodsAttribute bootstrapMethodsAttribute)
+        {
+            if (shouldBeMarkedAsUsed(bootstrapMethodsAttribute))
+            {
+                markAsUsed(bootstrapMethodsAttribute);
+
+                markConstant(clazz, bootstrapMethodsAttribute.u2attributeNameIndex);
+
+                bootstrapMethodsAttribute.bootstrapMethodEntryAccept(clazz,
+                                                                     bootstrapMethodIndex,
+                                                                     this);
+            }
+        }
+
+
+        // Implementations for BootstrapMethodInfoVisitor.
+
+        public void visitBootstrapMethodInfo(Clazz clazz, BootstrapMethodInfo bootstrapMethodInfo)
+        {
+            markAsUsed(bootstrapMethodInfo);
+
+            markConstant(clazz, bootstrapMethodInfo.u2methodHandleIndex);
+
+            // Mark the constant pool entries referenced by the arguments.
+            bootstrapMethodInfo.methodArgumentsAccept(clazz, UsageMarker.this);
         }
     }
 
@@ -472,6 +589,13 @@ implements ClassVisitor,
         markAsUsed(unknownAttribute);
 
         markConstant(clazz, unknownAttribute.u2attributeNameIndex);
+    }
+
+
+    public void visitBootstrapMethodsAttribute(Clazz clazz, BootstrapMethodsAttribute bootstrapMethodsAttribute)
+    {
+        // Don't mark the attribute and its name here. We may mark it in
+        // MyBootStrapMethodsAttributeUsageMarker.
     }
 
 
@@ -915,6 +1039,6 @@ implements ClassVisitor,
      */
     private void markConstant(Clazz clazz, int index)
     {
-         clazz.constantPoolEntryAccept(index, this);
+        clazz.constantPoolEntryAccept(index, this);
     }
 }

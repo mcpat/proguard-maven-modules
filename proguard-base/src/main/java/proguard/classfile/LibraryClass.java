@@ -2,7 +2,7 @@
  * ProGuard -- shrinking, optimization, obfuscation, and preverification
  *             of Java bytecode.
  *
- * Copyright (c) 2002-2010 Eric Lafortune (eric@graphics.cornell.edu)
+ * Copyright (c) 2002-2011 Eric Lafortune (eric@graphics.cornell.edu)
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -132,6 +132,17 @@ public class LibraryClass implements Clazz
     }
 
     public String getType(int constantIndex)
+    {
+        throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store constant pool");
+    }
+
+
+    public String getRefName(int constantIndex)
+    {
+        throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store constant pool");
+    }
+
+    public String getRefType(int constantIndex)
     {
         throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store constant pool");
     }
@@ -462,6 +473,12 @@ public class LibraryClass implements Clazz
 
 
     public void attributesAccept(AttributeVisitor attributeVisitor)
+    {
+        throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store attributes");
+    }
+
+
+    public void attributeAccept(String name, AttributeVisitor attributeVisitor)
     {
         throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store attributes");
     }

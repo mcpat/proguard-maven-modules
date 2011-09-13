@@ -12,7 +12,7 @@ if [ ! -f "$1" ]; then
 	echo "Usage: $0 <proguardX.Y.tar.gz>" 1>&2
 	exit 1
 fi
-newversion=`echo "$1" | sed 's|^.*proguard\([0-9.]\+\)\.tar\.gz$|\1|p;d'`
+newversion=`echo "$1" | sed 's|^.*proguard\([0-9.]\+[-_+a-zA-Z0-9.]*\)\.tar\.gz$|\1|p;d'`
 if [ ! "$newversion" ]; then
 	echo "Unrecognised proguard filename: $1" 1>&2
 	exit 2
@@ -69,7 +69,7 @@ movetomvn "$pgdir/src" proguard "$mvndir" proguard-base
 rm -Rf "$pgdir"
 
 # update version in pom files
-sed -i 's|\(ProGuard\s\+\)[0-9.]\+|\1'"$newversion"'|i' "$mvndir/README"
+sed -i 's|\(ProGuard\s\+\)[0-9.]\+|\1'"$newversion"'|i' "$mvndir/README.md"
 for d in "" proguard-anttask proguard-base proguard-gui proguard-retrace proguard-wtk-plugin; do
 	# only do one substitution (first one is pom's version)
 	sed -i 's|\(<version>\)[0-9.]\+\(</version>\)|\1'"$newversion"'\2|;ta;b;:a;n;ba' "$mvndir/$d/pom.xml"
