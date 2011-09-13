@@ -59,6 +59,8 @@ implements   ClassVisitor,
     private final boolean      mergeInterfacesAggressively;
     private final ClassVisitor extraClassVisitor;
 
+    private final MemberVisitor fieldOptimizationInfoCopier = new FieldOptimizationInfoCopier();
+
 
     /**
      * Creates a new ClassMerger that will merge classes into the given target
@@ -261,7 +263,7 @@ implements   ClassVisitor,
 
             // Copy over the class members.
             MemberAdder memberAdder =
-                new MemberAdder(targetClass);
+                new MemberAdder(targetClass, fieldOptimizationInfoCopier);
 
             programClass.fieldsAccept(memberAdder);
             programClass.methodsAccept(memberAdder);
@@ -536,5 +538,26 @@ implements   ClassVisitor,
 
             targetClass = clazz;
         }
+    }
+
+
+    /**
+     * This MemberVisitor copies field optimization info from copied fields.
+     */
+    private static class FieldOptimizationInfoCopier
+    extends              SimplifiedVisitor
+    implements           MemberVisitor
+    {
+        public void visitProgramField(ProgramClass programClass, ProgramField programField)
+        {
+            // Copy the optimization info from the field that was just copied.
+            ProgramField                 copiedField = (ProgramField)programField.getVisitorInfo();
+            FieldOptimizationInfo info        = (FieldOptimizationInfo)copiedField.getVisitorInfo();
+
+            programField.setVisitorInfo(new FieldOptimizationInfo(info));
+        }
+
+
+        public void visitProgramMethod(ProgramClass programClass, ProgramMethod programMethod) {}
     }
 }

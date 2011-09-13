@@ -117,7 +117,7 @@ public class ProgramClass implements Clazz
         }
         catch (ClassCastException ex)
         {
-            throw new ClassCastException("Expected Utf8Constant at index ["+constantIndex+"] in class ["+getName()+"], found ["+ex.getMessage()+"]");
+            throw ((IllegalStateException)new IllegalStateException("Expected Utf8Constant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
         }
     }
 
@@ -129,7 +129,7 @@ public class ProgramClass implements Clazz
         }
         catch (ClassCastException ex)
         {
-            throw new ClassCastException("Expected StringConstant at index ["+constantIndex+"] in class ["+getName()+"], found ["+ex.getMessage()+"]");
+            throw ((IllegalStateException)new IllegalStateException("Expected StringConstant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
         }
     }
 
@@ -141,7 +141,7 @@ public class ProgramClass implements Clazz
         }
         catch (ClassCastException ex)
         {
-            throw new ClassCastException("Expected ClassConstant at index ["+constantIndex+"] in class ["+getName()+"], found ["+ex.getMessage()+"]");
+            throw ((IllegalStateException)new IllegalStateException("Expected ClassConstant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
         }
     }
 
@@ -153,7 +153,7 @@ public class ProgramClass implements Clazz
         }
         catch (ClassCastException ex)
         {
-            throw new ClassCastException("Expected NameAndTypeConstant at index ["+constantIndex+"] in class ["+getName()+"], found ["+ex.getMessage()+"]");
+            throw ((IllegalStateException)new IllegalStateException("Expected NameAndTypeConstant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
         }
     }
 
@@ -165,7 +165,32 @@ public class ProgramClass implements Clazz
         }
         catch (ClassCastException ex)
         {
-            throw new ClassCastException("Expected NameAndTypeConstant at index ["+constantIndex+"] in class ["+getName()+"], found ["+ex.getMessage()+"]");
+            throw ((IllegalStateException)new IllegalStateException("Expected NameAndTypeConstant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
+        }
+    }
+
+
+    public String getRefName(int constantIndex)
+    {
+        try
+        {
+            return ((RefConstant)constantPool[constantIndex]).getName(this);
+        }
+        catch (ClassCastException ex)
+        {
+            throw ((IllegalStateException)new IllegalStateException("Expected RefConstant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
+        }
+    }
+
+    public String getRefType(int constantIndex)
+    {
+        try
+        {
+            return ((RefConstant)constantPool[constantIndex]).getType(this);
+        }
+        catch (ClassCastException ex)
+        {
+            throw ((IllegalStateException)new IllegalStateException("Expected RefConstant at index ["+constantIndex+"] in class ["+getName()+"]").initCause(ex));
         }
     }
 
@@ -467,6 +492,19 @@ public class ProgramClass implements Clazz
         for (int index = 0; index < u2attributesCount; index++)
         {
             attributes[index].accept(this, attributeVisitor);
+        }
+    }
+
+
+    public void attributeAccept(String name, AttributeVisitor attributeVisitor)
+    {
+        for (int index = 0; index < u2attributesCount; index++)
+        {
+            Attribute attribute = attributes[index];
+            if (attribute.getAttributeName(this).equals(name))
+            {
+                attribute.accept(this, attributeVisitor);
+            }
         }
     }
 

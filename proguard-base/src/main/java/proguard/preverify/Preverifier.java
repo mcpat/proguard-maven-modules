@@ -59,8 +59,8 @@ public class Preverifier
             new AllAttributeVisitor(
             new CodePreverifier(configuration.microEdition)));
 
-        // In Java Standard Edition, only class files from Java 6 or higher
-        // should be preverified.
+        // Classes from Java 6 may optionally be preverified.
+        // Classes from Java 7 or higher must be preverified.
         if (!configuration.microEdition)
         {
             preverifier =

@@ -137,6 +137,17 @@ public class LibraryClass implements Clazz
     }
 
 
+    public String getRefName(int constantIndex)
+    {
+        throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store constant pool");
+    }
+
+    public String getRefType(int constantIndex)
+    {
+        throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store constant pool");
+    }
+
+
     public void addSubClass(Clazz clazz)
     {
         if (subClasses == null)
@@ -462,6 +473,12 @@ public class LibraryClass implements Clazz
 
 
     public void attributesAccept(AttributeVisitor attributeVisitor)
+    {
+        throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store attributes");
+    }
+
+
+    public void attributeAccept(String name, AttributeVisitor attributeVisitor)
     {
         throw new UnsupportedOperationException("Library class ["+thisClassName+"] doesn't store attributes");
     }

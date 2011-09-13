@@ -100,6 +100,7 @@ public class ClassUtil
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_5) ? ClassConstants.INTERNAL_CLASS_VERSION_1_5 :
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_6_ALIAS) ||
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_6) ? ClassConstants.INTERNAL_CLASS_VERSION_1_6 :
+            classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_7) ? ClassConstants.INTERNAL_CLASS_VERSION_1_7 :
                                                                              0;
     }
 
@@ -119,6 +120,7 @@ public class ClassUtil
             case ClassConstants.INTERNAL_CLASS_VERSION_1_4: return ClassConstants.EXTERNAL_CLASS_VERSION_1_4;
             case ClassConstants.INTERNAL_CLASS_VERSION_1_5: return ClassConstants.EXTERNAL_CLASS_VERSION_1_5;
             case ClassConstants.INTERNAL_CLASS_VERSION_1_6: return ClassConstants.EXTERNAL_CLASS_VERSION_1_6;
+            case ClassConstants.INTERNAL_CLASS_VERSION_1_7: return ClassConstants.EXTERNAL_CLASS_VERSION_1_7;
             default:                                        return null;
         }
     }
@@ -132,7 +134,7 @@ public class ClassUtil
     public static void checkVersionNumbers(int classVersion) throws UnsupportedOperationException
     {
         if (classVersion < ClassConstants.INTERNAL_CLASS_VERSION_1_0 ||
-            classVersion > ClassConstants.INTERNAL_CLASS_VERSION_1_6)
+            classVersion > ClassConstants.INTERNAL_CLASS_VERSION_1_7)
         {
             throw new UnsupportedOperationException("Unsupported version number ["+
                                                     internalMajorClassVersion(classVersion)+"."+

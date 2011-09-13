@@ -90,6 +90,16 @@ public interface Clazz extends VisitorAccepter
      */
     public String getType(int constantIndex);
 
+    /**
+     * Returns the name of the RefConstant at the specified index.
+     */
+    public String getRefName(int constantIndex);
+
+    /**
+     * Returns the type of the RefConstant at the specified index.
+     */
+    public String getRefType(int constantIndex);
+
 
     // Methods pertaining to related classes.
 
@@ -229,4 +239,9 @@ public interface Clazz extends VisitorAccepter
      * Lets the given attribute info visitor visit all attributes of this class.
      */
     public void attributesAccept(AttributeVisitor attributeVisitor);
+
+    /**
+     * Lets the given attribute info visitor visit the specified attribute.
+     */
+    public void attributeAccept(String name, AttributeVisitor attributeVisitor);
 }

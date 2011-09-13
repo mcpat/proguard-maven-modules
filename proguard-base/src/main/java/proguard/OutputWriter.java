@@ -227,7 +227,7 @@ public class OutputWriter
         }
         catch (IOException ex)
         {
-            throw new IOException("Can't write [" + classPath.get(fromOutputIndex).getName() + "] (" + ex.getMessage() + ")");
+            throw (IOException)new IOException("Can't write [" + classPath.get(fromOutputIndex).getName() + "] (" + ex.getMessage() + ")").initCause(ex);
         }
     }
 

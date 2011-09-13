@@ -66,6 +66,7 @@ public class Optimizer
     private static final String CODE_SIMPLIFICATION_CAST       = "code/simplification/cast";
     private static final String CODE_SIMPLIFICATION_FIELD      = "code/simplification/field";
     private static final String CODE_SIMPLIFICATION_BRANCH     = "code/simplification/branch";
+    private static final String CODE_SIMPLIFICATION_STRING     = "code/simplification/string";
     private static final String CODE_SIMPLIFICATION_ADVANCED   = "code/simplification/advanced";
     private static final String CODE_REMOVAL_ADVANCED          = "code/removal/advanced";
     private static final String CODE_REMOVAL_SIMPLE            = "code/removal/simple";
@@ -158,6 +159,7 @@ public class Optimizer
         boolean codeSimplificationCast       = filter.matches(CODE_SIMPLIFICATION_CAST);
         boolean codeSimplificationField      = filter.matches(CODE_SIMPLIFICATION_FIELD);
         boolean codeSimplificationBranch     = filter.matches(CODE_SIMPLIFICATION_BRANCH);
+        boolean codeSimplificationString     = filter.matches(CODE_SIMPLIFICATION_STRING);
         boolean codeSimplificationAdvanced   = filter.matches(CODE_SIMPLIFICATION_ADVANCED);
         boolean codeRemovalAdvanced          = filter.matches(CODE_REMOVAL_ADVANCED);
         boolean codeRemovalSimple            = filter.matches(CODE_REMOVAL_SIMPLE);
@@ -187,6 +189,7 @@ public class Optimizer
         InstructionCounter codeSimplificationCastCounter       = new InstructionCounter();
         InstructionCounter codeSimplificationFieldCounter      = new InstructionCounter();
         InstructionCounter codeSimplificationBranchCounter     = new InstructionCounter();
+        InstructionCounter codeSimplificationStringCounter     = new InstructionCounter();
         InstructionCounter codeSimplificationAdvancedCounter   = new InstructionCounter();
         InstructionCounter deletedCounter                      = new InstructionCounter();
         InstructionCounter addedCounter                        = new InstructionCounter();
@@ -430,6 +433,12 @@ public class Optimizer
             // This operation also updates the stack sizes.
             programClassPool.classesAccept(
                 new MemberReferenceFixer());
+
+            // Remove unused bootstrap method arguments.
+            programClassPool.classesAccept(
+                new AllAttributeVisitor(
+                new AllBootstrapMethodInfoVisitor(
+                new BootstrapMethodArgumentShrinker())));
         }
 
         if (methodRemovalParameter ||
@@ -743,6 +752,15 @@ public class Optimizer
                 new GotoReturnReplacer(codeAttributeEditor, codeSimplificationBranchCounter));
         }
 
+        if (codeSimplificationString)
+        {
+            // Peephole optimizations involving branches.
+            peepholeOptimizations.add(
+                new InstructionSequencesReplacer(InstructionSequenceConstants.CONSTANTS,
+                                                 InstructionSequenceConstants.STRING,
+                                                 branchTargetFinder, codeAttributeEditor, codeSimplificationStringCounter));
+        }
+
         if (!peepholeOptimizations.isEmpty())
         {
             // Convert the list into an array.
@@ -795,6 +813,11 @@ public class Optimizer
                 new VariableOptimizer(false, codeAllocationVariableCounter))));
         }
 
+
+        // Remove unused constants.
+        programClassPool.classesAccept(
+            new ConstantPoolShrinker());
+
         int classMarkingFinalCount            = classMarkingFinalCounter           .getCount();
         int classMergingVerticalCount         = classMergingVerticalCounter        .getCount();
         int classMergingHorizontalCount       = classMergingHorizontalCounter      .getCount();
@@ -816,6 +839,7 @@ public class Optimizer
         int codeSimplificationCastCount       = codeSimplificationCastCounter      .getCount();
         int codeSimplificationFieldCount      = codeSimplificationFieldCounter     .getCount();
         int codeSimplificationBranchCount     = codeSimplificationBranchCounter    .getCount();
+        int codeSimplificationStringCount     = codeSimplificationStringCounter    .getCount();
         int codeSimplificationAdvancedCount   = codeSimplificationAdvancedCounter  .getCount();
         int codeRemovalCount                  = deletedCounter                     .getCount() - addedCounter.getCount();
         int codeRemovalVariableCount          = codeRemovalVariableCounter         .getCount();
@@ -845,6 +869,7 @@ public class Optimizer
             System.out.println("  Number of cast peephole optimizations:       " + codeSimplificationCastCount       + disabled(codeSimplificationCast));
             System.out.println("  Number of field peephole optimizations:      " + codeSimplificationFieldCount      + disabled(codeSimplificationField));
             System.out.println("  Number of branch peephole optimizations:     " + codeSimplificationBranchCount     + disabled(codeSimplificationBranch));
+            System.out.println("  Number of string peephole optimizations:     " + codeSimplificationStringCount     + disabled(codeSimplificationString));
             System.out.println("  Number of simplified instructions:           " + codeSimplificationAdvancedCount   + disabled(codeSimplificationAdvanced));
             System.out.println("  Number of removed instructions:              " + codeRemovalCount                  + disabled(codeRemovalAdvanced));
             System.out.println("  Number of removed local variables:           " + codeRemovalVariableCount          + disabled(codeRemovalVariable));
@@ -873,6 +898,7 @@ public class Optimizer
                codeSimplificationCastCount       > 0 ||
                codeSimplificationFieldCount      > 0 ||
                codeSimplificationBranchCount     > 0 ||
+               codeSimplificationStringCount     > 0 ||
                codeSimplificationAdvancedCount   > 0 ||
                codeRemovalCount                  > 0 ||
                codeRemovalVariableCount          > 0 ||
