@@ -17,6 +17,7 @@
 				<configuration>
 					<archive>
 						<manifest>
+							<addClasspath>true</addClasspath>
 							<mainClass>proguard.gui.ProGuardGUI</mainClass>
 						</manifest>
 					</archive>
