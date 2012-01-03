@@ -72,7 +72,7 @@ rm -Rf "$pgdir"
 sed -i 's|\(ProGuard\s\+\)[0-9.]\+|\1'"$newversion"'|i' "$mvndir/README.md"
 for d in "" proguard-anttask proguard-base proguard-gui proguard-retrace proguard-wtk-plugin; do
 	# only do one substitution (first one is pom's version)
-	sed -i 's|\(<version>\)[0-9.]\+\(</version>\)|\1'"$newversion"'\2|;ta;b;:a;n;ba' "$mvndir/$d/pom.xml"
+	sed -i 's|\(<version>\)[0-9a-zA-Z.]\+\(</version>\)|\1'"$newversion"'\2|;ta;b;:a;n;ba' "$mvndir/$d/pom.xml"
 done
 
 echo "Done! Don't forget to create a new tag."
