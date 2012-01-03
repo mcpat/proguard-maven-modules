@@ -137,9 +137,12 @@ public class ClassUtil
         if (classVersion < ClassConstants.INTERNAL_CLASS_VERSION_1_0 ||
             classVersion > ClassConstants.INTERNAL_CLASS_VERSION_1_7)
         {
-            throw new UnsupportedOperationException("Unsupported version number ["+
+            throw new UnsupportedOperationException("Unsupported class version number ["+
                                                     internalMajorClassVersion(classVersion)+"."+
-                                                    internalMinorClassVersion(classVersion)+"] for class format");
+                                                    internalMinorClassVersion(classVersion)+"] (maximum "+
+                                                    ClassConstants.INTERNAL_CLASS_VERSION_1_7_MAJOR+"."+
+                                                    ClassConstants.INTERNAL_CLASS_VERSION_1_7_MINOR+", Java "+
+                                                    ClassConstants.EXTERNAL_CLASS_VERSION_1_7+")");
         }
     }
 

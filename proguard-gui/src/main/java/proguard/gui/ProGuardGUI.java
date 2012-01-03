@@ -202,13 +202,13 @@ public class ProGuardGUI extends JFrame
         splashPanelConstraints.anchor    = GridBagConstraints.NORTHWEST;
         //splashPanelConstraints.insets    = constraints.insets;
 
-        GridBagConstraints welcomeTextAreaConstraints = new GridBagConstraints();
-        welcomeTextAreaConstraints.gridwidth = GridBagConstraints.REMAINDER;
-        welcomeTextAreaConstraints.fill      = GridBagConstraints.NONE;
-        welcomeTextAreaConstraints.weightx   = 1.0;
-        welcomeTextAreaConstraints.weighty   = 0.01;
-        welcomeTextAreaConstraints.anchor    = GridBagConstraints.CENTER;//NORTHWEST;
-        welcomeTextAreaConstraints.insets    = new Insets(20, 40, 20, 40);
+        GridBagConstraints welcomePaneConstraints = new GridBagConstraints();
+        welcomePaneConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        welcomePaneConstraints.fill      = GridBagConstraints.NONE;
+        welcomePaneConstraints.weightx   = 1.0;
+        welcomePaneConstraints.weighty   = 0.01;
+        welcomePaneConstraints.anchor    = GridBagConstraints.CENTER;//NORTHWEST;
+        welcomePaneConstraints.insets    = new Insets(20, 40, 20, 40);
 
         GridBagConstraints panelConstraints = new GridBagConstraints();
         panelConstraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -295,18 +295,19 @@ public class ProGuardGUI extends JFrame
         splashPanel = new SplashPanel(splash, 0.5, 5500L);
         splashPanel.setPreferredSize(new Dimension(0, 200));
 
-        JTextArea welcomeTextArea = new JTextArea(msg("proGuardInfo"), 18, 50);
-        welcomeTextArea.setOpaque(false);
-        welcomeTextArea.setEditable(false);
-        welcomeTextArea.setLineWrap(true);
-        welcomeTextArea.setWrapStyleWord(true);
-        welcomeTextArea.setPreferredSize(new Dimension(0, 0));
-        welcomeTextArea.setBorder(new EmptyBorder(20, 20, 20, 20));
-        addBorder(welcomeTextArea, "welcome");
+        JEditorPane welcomePane = new JEditorPane("text/html", msg("proGuardInfo"));
+        welcomePane.setPreferredSize(new Dimension(640, 350));
+        // The constant HONOR_DISPLAY_PROPERTIES isn't present yet in JDK 1.4.
+        //welcomePane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        welcomePane.putClientProperty("JEditorPane.honorDisplayProperties", Boolean.TRUE);
+        welcomePane.setOpaque(false);
+        welcomePane.setEditable(false);
+        welcomePane.setBorder(new EmptyBorder(20, 20, 20, 20));
+        addBorder(welcomePane, "welcome");
 
         JPanel proGuardPanel = new JPanel(layout);
         proGuardPanel.add(splashPanel,      splashPanelConstraints);
-        proGuardPanel.add(welcomeTextArea,  welcomeTextAreaConstraints);
+        proGuardPanel.add(welcomePane,  welcomePaneConstraints);
 
         // Create the input panel.
         // TODO: properly clone the ClassPath objects.
