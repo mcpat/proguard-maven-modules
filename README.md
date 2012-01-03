@@ -1,4 +1,4 @@
-Maven modules of the ProGuard 4.7beta2beta1 release.
+Maven modules of the ProGuard 4.7beta3beta2beta1 release.
 =========================================
 
 For more information see http://proguard.sourceforge.net/
