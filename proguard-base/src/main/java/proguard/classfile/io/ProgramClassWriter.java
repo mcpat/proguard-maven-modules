@@ -57,7 +57,7 @@ implements   ClassVisitor,
 
 
     /**
-     * Creates a new ProgramClassWriter for reading from the given DataOutput.
+     * Creates a new ProgramClassWriter for writing to the given DataOutput.
      */
     public ProgramClassWriter(DataOutput dataOutput)
     {

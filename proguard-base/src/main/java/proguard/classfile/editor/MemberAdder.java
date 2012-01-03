@@ -26,7 +26,7 @@ import proguard.classfile.util.SimplifiedVisitor;
 import proguard.classfile.visitor.MemberVisitor;
 
 /**
- * This ConstantVisitor copies all class members that it visits to the given
+ * This MemberVisitor copies all class members that it visits to the given
  * target class. Their visitor info is set to the class members from which they
  * were copied.
  *

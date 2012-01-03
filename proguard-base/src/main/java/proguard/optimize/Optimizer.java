@@ -23,6 +23,7 @@ package proguard.optimize;
 import proguard.*;
 import proguard.classfile.*;
 import proguard.classfile.attribute.visitor.*;
+import proguard.classfile.constant.Constant;
 import proguard.classfile.constant.visitor.*;
 import proguard.classfile.editor.*;
 import proguard.classfile.instruction.visitor.*;
@@ -267,6 +268,16 @@ public class Optimizer
             new ConstantTagFilter(ClassConstants.CONSTANT_String,
             new ReferencedMemberVisitor(keepMarker))));
 
+        // We also keep all bootstrap method signatures.
+        programClassPool.classesAccept(
+            new ClassVersionFilter(ClassConstants.INTERNAL_CLASS_VERSION_1_7,
+            new AllAttributeVisitor(
+            new AttributeNameFilter(ClassConstants.ATTR_BootstrapMethods,
+            new AllBootstrapMethodInfoVisitor(
+            new BootstrapMethodHandleTraveler(
+            new MethodrefTraveler(
+            new ReferencedMemberVisitor(keepMarker))))))));
+
         // Attach some optimization info to all classes and class members, so
         // it can be filled out later.
         programClassPool.classesAccept(new ClassOptimizationInfoSetter());
@@ -362,18 +373,29 @@ public class Optimizer
                 new AllAttributeVisitor(
                 new PartialEvaluator(valueFactory, storingInvocationUnit, false))));
 
-            // Count the constant fields and methods.
-            programClassPool.classesAccept(
-                new MultiClassVisitor(
-                new ClassVisitor[]
-                {
+            if (fieldPropagationValue)
+            {
+                // Count the constant fields.
+                programClassPool.classesAccept(
                     new AllFieldVisitor(
-                    new ConstantMemberFilter(fieldPropagationValueCounter)),
+                    new ConstantMemberFilter(fieldPropagationValueCounter)));
+            }
+
+            if (methodPropagationParameter)
+            {
+                // Count the constant method parameters.
+                programClassPool.classesAccept(
                     new AllMethodVisitor(
-                    new ConstantParameterFilter(methodPropagationParameterCounter)),
+                    new ConstantParameterFilter(methodPropagationParameterCounter)));
+            }
+
+            if (methodPropagationReturnvalue)
+            {
+                // Count the constant method return values.
+                programClassPool.classesAccept(
                     new AllMethodVisitor(
-                    new ConstantMemberFilter(methodPropagationReturnvalueCounter)),
-                }));
+                    new ConstantMemberFilter(methodPropagationReturnvalueCounter)));
+            }
         }
 
         InvocationUnit loadingInvocationUnit =
@@ -845,6 +867,16 @@ public class Optimizer
         int codeRemovalVariableCount          = codeRemovalVariableCounter         .getCount();
         int codeRemovalExceptionCount         = codeRemovalExceptionCounter        .getCount();
         int codeAllocationVariableCount       = codeAllocationVariableCounter      .getCount();
+
+        // Forget about constant fields, parameters, and return values, if they
+        // didn't lead to any useful optimizations. We want to avoid fruitless
+        // additional optimization passes.
+        if (codeSimplificationAdvancedCount == 0)
+        {
+            fieldPropagationValueCount        = 0;
+            methodPropagationParameterCount   = 0;
+            methodPropagationReturnvalueCount = 0;
+        }
 
         if (configuration.verbose)
         {

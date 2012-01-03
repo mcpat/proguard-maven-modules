@@ -31,9 +31,9 @@ import proguard.classfile.visitor.*;
 import proguard.optimize.info.MethodOptimizationInfo;
 
 /**
- * This ConstantVisitor travels from any invoke dynamic constants that it
- * visits to their bootstrap method handle constants, and applies a given
- * constant visitor.
+ * This ConstantVisitor and BootstrapMethodInfoVisitor travels from any invoke
+ * dynamic constants or bootstrap method info entries that it visits to their
+ * bootstrap method handle constants, and applies a given constant visitor.
  *
  * @author Eric Lafortune
  */

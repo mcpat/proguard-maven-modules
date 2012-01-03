@@ -100,6 +100,7 @@ public class ClassUtil
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_5) ? ClassConstants.INTERNAL_CLASS_VERSION_1_5 :
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_6_ALIAS) ||
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_6) ? ClassConstants.INTERNAL_CLASS_VERSION_1_6 :
+            classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_7_ALIAS) ||
             classVersion.equals(ClassConstants.EXTERNAL_CLASS_VERSION_1_7) ? ClassConstants.INTERNAL_CLASS_VERSION_1_7 :
                                                                              0;
     }
@@ -425,6 +426,21 @@ public class ClassUtil
         }
 
         return internalClassNameFromClassType(internalClassType);
+    }
+
+
+    /**
+     * Returns whether the given method name refers to a class initializer or
+     * an instance initializer.
+     * @param internalMethodName the internal method name,
+     *                           e.g. "<code><clinit></code>".
+     * @return whether the method name refers to an initializer,
+     *                           e.g. <code>true</code>.
+     */
+    public static boolean isInitializer(String internalMethodName)
+    {
+        return internalMethodName.equals(ClassConstants.INTERNAL_METHOD_NAME_CLINIT) ||
+               internalMethodName.equals(ClassConstants.INTERNAL_METHOD_NAME_INIT);
     }
 
 

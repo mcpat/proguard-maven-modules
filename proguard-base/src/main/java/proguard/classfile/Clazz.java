@@ -126,11 +126,25 @@ public interface Clazz extends VisitorAccepter
     public boolean extends_(Clazz clazz);
 
     /**
+     * Returns whether this class extends the specified class.
+     * A class is always considered to extend itself.
+     * Interfaces are considered to only extend the root Object class.
+     */
+    public boolean extends_(String className);
+
+    /**
      * Returns whether this class implements the given class.
      * A class is always considered to implement itself.
      * Interfaces are considered to implement all their superinterfaces.
      */
     public boolean extendsOrImplements(Clazz clazz);
+
+    /**
+     * Returns whether this class implements the specified class.
+     * A class is always considered to implement itself.
+     * Interfaces are considered to implement all their superinterfaces.
+     */
+    public boolean extendsOrImplements(String className);
 
 
     // Methods for getting specific class members.

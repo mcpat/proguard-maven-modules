@@ -27,10 +27,10 @@ import proguard.classfile.attribute.preverification.*;
 import proguard.classfile.attribute.preverification.visitor.*;
 import proguard.classfile.attribute.visitor.*;
 import proguard.classfile.constant.*;
-import proguard.classfile.constant.visitor.ConstantVisitor;
+import proguard.classfile.constant.visitor.*;
 import proguard.classfile.instruction.*;
 import proguard.classfile.instruction.visitor.InstructionVisitor;
-import proguard.classfile.util.SimplifiedVisitor;
+import proguard.classfile.util.*;
 import proguard.classfile.visitor.*;
 
 
@@ -65,21 +65,15 @@ implements ClassVisitor,
     private static final Object USED          = new Object();
 
 
-    private final MyInterfaceUsageMarker          interfaceUsageMarker          = new MyInterfaceUsageMarker();
-    private final MyPossiblyUsedMemberUsageMarker possiblyUsedMemberUsageMarker = new MyPossiblyUsedMemberUsageMarker();
-    private final MemberVisitor                   nonEmptyMethodUsageMarker     = new AllAttributeVisitor(
-                                                                                  new MyNonEmptyMethodUsageMarker());
-
-//    private ClassVisitor       dynamicClassMarker   =
-//        new MultiClassVisitor(
-//        new ClassVisitor[]
-//        {
-//            this,
-//            new NamedMethodVisitor(ClassConstants.INTERNAL_METHOD_NAME_INIT,
-//                                   ClassConstants.INTERNAL_METHOD_TYPE_INIT,
-//                                   this)
-//        });
-
+    private final MyInterfaceUsageMarker          interfaceUsageMarker           = new MyInterfaceUsageMarker();
+    private final MyPossiblyUsedMemberUsageMarker possiblyUsedMemberUsageMarker  = new MyPossiblyUsedMemberUsageMarker();
+    private final MemberVisitor                   nonEmptyMethodUsageMarker      = new AllAttributeVisitor(
+                                                                                   new MyNonEmptyMethodUsageMarker());
+    private final ConstantVisitor                 parameterlessConstructorMarker = new ConstantTagFilter(new int[] { ClassConstants.CONSTANT_String, ClassConstants.CONSTANT_Class },
+                                                                                   new ReferencedClassVisitor(
+                                                                                   new NamedMethodVisitor(ClassConstants.INTERNAL_METHOD_NAME_INIT,
+                                                                                                          ClassConstants.INTERNAL_METHOD_TYPE_INIT,
+                                                                                                          this)));
 
     // Implementations for ClassVisitor.
 
@@ -114,11 +108,6 @@ implements ClassVisitor,
         programClass.methodAccept(ClassConstants.INTERNAL_METHOD_NAME_CLINIT,
                                   ClassConstants.INTERNAL_METHOD_TYPE_CLINIT,
                                   nonEmptyMethodUsageMarker);
-
-        // Explicitly mark the parameterless <init> method.
-        programClass.methodAccept(ClassConstants.INTERNAL_METHOD_NAME_INIT,
-                                  ClassConstants.INTERNAL_METHOD_TYPE_INIT,
-                                  this);
 
         // Process all class members that have already been marked as possibly used.
         programClass.fieldsAccept(possiblyUsedMemberUsageMarker);
@@ -366,7 +355,8 @@ implements ClassVisitor,
     {
         if ((method.getAccessFlags() &
              (ClassConstants.INTERNAL_ACC_PRIVATE |
-              ClassConstants.INTERNAL_ACC_STATIC)) == 0)
+              ClassConstants.INTERNAL_ACC_STATIC)) == 0 &&
+            !ClassUtil.isInitializer(method.getName(clazz)))
         {
             clazz.accept(new ConcreteClassDownTraveler(
                          new ClassHierarchyTraveler(true, true, false, true,
@@ -424,11 +414,7 @@ implements ClassVisitor,
 
             markConstant(clazz, stringConstant.u2stringIndex);
 
-            // Mark the referenced class and its parameterless constructor,
-            // if the string is being used in a Class.forName construct.
-            //stringConstant.referencedClassAccept(dynamicClassMarker);
-
-            // Mark the referenced class or class member, if any.
+            // Mark the referenced class and class member, if any.
             stringConstant.referencedClassAccept(this);
             stringConstant.referencedMemberAccept(this);
         }
@@ -536,7 +522,7 @@ implements ClassVisitor,
     implements    AttributeVisitor,
                   BootstrapMethodInfoVisitor
     {
-        private int bootstrapMethodIndex;;
+        private int bootstrapMethodIndex;
 
 
         private MyBootStrapMethodUsageMarker(int bootstrapMethodIndex)
@@ -961,6 +947,12 @@ implements ClassVisitor,
     public void visitConstantInstruction(Clazz clazz, Method method, CodeAttribute codeAttribute, int offset, ConstantInstruction constantInstruction)
     {
         markConstant(clazz, constantInstruction.constantIndex);
+
+        // Also mark the parameterless constructor of the class, in case the
+        // string constant or class constant is being used in a Class.forName
+        // or a .class construct.
+        clazz.constantPoolEntryAccept(constantInstruction.constantIndex,
+                                      parameterlessConstructorMarker);
     }
 
 

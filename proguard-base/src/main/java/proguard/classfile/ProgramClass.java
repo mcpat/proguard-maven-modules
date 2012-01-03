@@ -240,6 +240,19 @@ public class ProgramClass implements Clazz
     }
 
 
+    public boolean extends_(String className)
+    {
+        if (getName().equals(className))
+        {
+            return true;
+        }
+
+        Clazz superClass = getSuperClass();
+        return superClass != null &&
+               superClass.extends_(className);
+    }
+
+
     public boolean extendsOrImplements(Clazz clazz)
     {
         if (this.equals(clazz))
@@ -259,6 +272,34 @@ public class ProgramClass implements Clazz
             Clazz interfaceClass = getInterface(index);
             if (interfaceClass != null &&
                 interfaceClass.extendsOrImplements(clazz))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    public boolean extendsOrImplements(String className)
+    {
+        if (getName().equals(className))
+        {
+            return true;
+        }
+
+        Clazz superClass = getSuperClass();
+        if (superClass != null &&
+            superClass.extendsOrImplements(className))
+        {
+            return true;
+        }
+
+        for (int index = 0; index < u2interfacesCount; index++)
+        {
+            Clazz interfaceClass = getInterface(index);
+            if (interfaceClass != null &&
+                interfaceClass.extendsOrImplements(className))
             {
                 return true;
             }

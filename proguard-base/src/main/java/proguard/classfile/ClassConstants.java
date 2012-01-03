@@ -64,6 +64,7 @@ public interface ClassConstants
     public static final String EXTERNAL_CLASS_VERSION_1_7       = "1.7";
     public static final String EXTERNAL_CLASS_VERSION_1_5_ALIAS = "5";
     public static final String EXTERNAL_CLASS_VERSION_1_6_ALIAS = "6";
+    public static final String EXTERNAL_CLASS_VERSION_1_7_ALIAS = "7";
 
     public static final int INTERNAL_ACC_PUBLIC       = 0x0001;
     public static final int INTERNAL_ACC_PRIVATE      = 0x0002;

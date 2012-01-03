@@ -190,6 +190,18 @@ public class LibraryClass implements Clazz
     }
 
 
+    public boolean extends_(String className)
+    {
+        if (getName().equals(className))
+        {
+            return true;
+        }
+
+        return superClass != null &&
+               superClass.extends_(className);
+    }
+
+
     public boolean extendsOrImplements(Clazz clazz)
     {
         if (this.equals(clazz))
@@ -210,6 +222,36 @@ public class LibraryClass implements Clazz
                 Clazz interfaceClass = interfaceClasses[index];
                 if (interfaceClass != null &&
                     interfaceClass.extendsOrImplements(clazz))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    public boolean extendsOrImplements(String className)
+    {
+        if (getName().equals(className))
+        {
+            return true;
+        }
+
+        if (superClass != null &&
+            superClass.extendsOrImplements(className))
+        {
+            return true;
+        }
+
+        if (interfaceClasses != null)
+        {
+            for (int index = 0; index < interfaceClasses.length; index++)
+            {
+                Clazz interfaceClass = interfaceClasses[index];
+                if (interfaceClass != null &&
+                    interfaceClass.extendsOrImplements(className))
                 {
                     return true;
                 }

@@ -290,6 +290,7 @@ implements   ConstantVisitor
     private int constantSize()
     {
         return opcode == InstructionConstants.OP_MULTIANEWARRAY  ? 1 :
+               opcode == InstructionConstants.OP_INVOKEDYNAMIC ||
                opcode == InstructionConstants.OP_INVOKEINTERFACE ? 2 :
                                                                    0;
     }
