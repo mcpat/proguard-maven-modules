@@ -10,6 +10,10 @@
 	<name>[${project.groupId}] ${project.artifactId}</name>
 	<description>ProGuard is a free Java class file shrinker, optimizer, obfuscator, and preverifier.</description>
 	<url>http://proguard.sourceforge.net/</url>
+	
+	<prerequisites>
+		<maven>3</maven>
+	</prerequisites>
 
 	<developers>
 		<developer>
@@ -145,6 +149,19 @@
 		<module>proguard-retrace</module>
 		<module>proguard-gui</module>
 		<module>proguard-anttask</module>
-		<module>proguard-wtk-plugin</module>
 	</modules>
+	
+	<profiles>
+		<profile>
+			<id>__wtk_plugin_build__</id>
+			<activation>
+				<file>
+					<exists>${wireless-toolkit-path}/wtklib/kenv.zip</exists>
+				</file>
+			</activation>
+			<modules>
+				<module>proguard-wtk-plugin</module>
+			</modules>
+		</profile>
+	</profiles>
 </project>

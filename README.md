@@ -1,15 +1,17 @@
 Maven modules of the ProGuard 4.7 release.
 =========================================
 
-For more information see http://proguard.sourceforge.net/
+For more information see the official [ProGuard Website][PG]
 
-Pre-requisites
------------
-The artifact com.sun.kvem:kenv:2.2 is needed for compiling. This artifact is not available on Maven central and cannot be deployed given the Oracle policies.
+[PG]: http://proguard.sourceforge.net/
 
-Thus, you must add it manually to your local maven repository
+Build Information
+-----------------
 
- 1. To install the WTK2.2 you must have a JDK1.4 or a JDK5 (for me, it doesn't work with the JDK6)
- 2. Download and extract the [WTK 2.2](http://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-javame-419430.html#j2me_wireless_toolkit-2_2-oth-JPR)
- 3. Install the needed artifact :
-<pre><code> mvn install:install-file -DgroupId=com.sun.kvem -DartifactId=kenv -Dversion=2.2 -Dfile=WTK2.2/wtklib/kenv.zip -Dpackaging=jar -Dgenerate-pom=true</code></pre>
+To enable the build of proguard-wtk-plugin you have to do the following:
+
+ 1. Install the WTK2.2 (Java 1.4+ is required) from [Oracle Download Page][WTK]
+ 2. Specify the property "wireless-toolkit-path" in your %HOME%/.m2/settings.xml file and let it point to the WTK installation directory
+ 3. If specified correctly the next Maven build should include the proguard-wtk-plugin
+
+[WTK]: http://www.oracle.com/technetwork/java/download-135801.html
