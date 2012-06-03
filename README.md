@@ -1,4 +1,4 @@
-Maven modules of the ProGuard 4.7 release.
+Maven modules of the ProGuard 4.8 release.
 =========================================
 
 For more information see the official [ProGuard Website][PG]
